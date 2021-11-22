@@ -17,4 +17,19 @@ class Badge extends Model
     protected $fillable = [
         'user_id', 'name'
     ];
+
+    /**
+     * The events that are assigned.
+     */
+    protected $dispatchesEvents = [
+        'created' => BadgeUnlocked::class
+    ];
+
+    /**
+     * Get the user that owns the badge.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

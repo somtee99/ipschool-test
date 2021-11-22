@@ -17,4 +17,19 @@ class Achievement extends Model
     protected $fillable = [
         'user_id', 'name'
     ];
+
+    /**
+     * The events that are assigned.
+     */
+    protected $dispatchesEvents = [
+        'created' => AchievementUnlocked::class
+    ];
+
+    /**
+     * Get the user that owns the achievement.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
