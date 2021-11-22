@@ -17,6 +17,7 @@ class AchievementUnlocked
 
     public $achievement_name;
     public $user;
+    
     /**
      * Create a new event instance.
      *
