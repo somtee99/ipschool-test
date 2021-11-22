@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\AchievementUnlocked;
+use App\Events\BadgeUnlocked;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -51,6 +52,7 @@ class CheckForBadge
             if($no_of_achievements == $badge['breakpoint']){
                 $data['name'] = $badge['name'];
                 $user()->badges()->create($data);
+                BadgeUnlocked::dispatch($badge['name'], $user);
                 break;
             }
         }

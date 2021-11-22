@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\CommentWritten;
+use App\Events\AchievementUnlocked;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -38,6 +39,7 @@ class CheckForCommentAchievement
                     $achievement['name'] = $achievement_breakpoint . ' Comments Written';
                 }
                 $comment->user()->achievements()->create($achievement);
+                AchievementUnlocked::dispatch($achievement['name'], $comment->user);
                 break;
             }
         }

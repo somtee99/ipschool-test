@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\LessonWatched;
+use App\Events\AchievementUnlocked;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
@@ -39,6 +40,7 @@ class CheckForLessonAchievement
                     $achievement['name'] = $achievement_breakpoint . ' Lessons Watched';
                 }
                 $user()->achievements()->create($achievement);
+                AchievementUnlocked::dispatch($achievement['name'], $user);
                 break;
             }
         }
