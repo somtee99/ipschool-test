@@ -38,6 +38,7 @@ class CheckForCommentAchievement
                 }else{
                     $achievement['name'] = $achievement_breakpoint . ' Comments Written';
                 }
+                $achievement['type'] = 'comment';
                 $comment->user()->achievements()->create($achievement);
                 AchievementUnlocked::dispatch($achievement['name'], $comment->user);
                 break;

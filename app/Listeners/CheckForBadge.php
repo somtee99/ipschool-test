@@ -31,19 +31,19 @@ class CheckForBadge
         $no_of_achievements = $user()->achievements()->count();
         $badges = [
             [
-                'name' => 'beginner',
+                'name' => 'Beginner',
                 'breakpoint' => 0
             ],
             [
-                'name' => 'intermediate',
+                'name' => 'Intermediate',
                 'breakpoint' => 4
             ],
             [
-                'name' => 'advanced',
+                'name' => 'Advanced',
                 'breakpoint' => 8
             ],
             [
-                'name' => 'master',
+                'name' => 'Master',
                 'breakpoint' => 10
             ],
         ]; //breakpoints for badges

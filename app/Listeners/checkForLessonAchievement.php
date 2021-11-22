@@ -39,6 +39,7 @@ class CheckForLessonAchievement
                 }else{
                     $achievement['name'] = $achievement_breakpoint . ' Lessons Watched';
                 }
+                $achievement['type'] = 'lesson';
                 $user()->achievements()->create($achievement);
                 AchievementUnlocked::dispatch($achievement['name'], $user);
                 break;
