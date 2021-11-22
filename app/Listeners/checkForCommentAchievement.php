@@ -6,7 +6,7 @@ use App\Events\CommentWritten;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 
-class checkForCommentAchievement
+class CheckForCommentAchievement
 {
     /**
      * Create the event listener.
@@ -38,6 +38,7 @@ class checkForCommentAchievement
                     $achievement['name'] = $achievement_breakpoint . ' Comments Written';
                 }
                 $comment->user()->achievements()->create($achievement);
+                break;
             }
         }
     }
