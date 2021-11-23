@@ -52,6 +52,7 @@ class CheckForBadge
             if($no_of_achievements == $badge['breakpoint']){
                 $data['name'] = $badge['name'];
                 $user()->badges()->create($data);
+                
                 BadgeUnlocked::dispatch($badge['name'], $user);
                 break;
             }

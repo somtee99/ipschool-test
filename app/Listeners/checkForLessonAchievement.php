@@ -2,6 +2,8 @@
 
 namespace App\Listeners;
 
+use App\Models\User;
+use App\Models\Achievement;
 use App\Events\LessonWatched;
 use App\Events\AchievementUnlocked;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,22 +29,30 @@ class CheckForLessonAchievement
      */
     public function handle(LessonWatched $event)
     {
-        $lesson = $event->comment;
-        $user = $event-user;
-        $no_of_watched_lessons = $user()->watched()->count();
-        $achievement_breakpoints = [1, 5, 10, 25, 50];  //breakpoints for watched lessons
+        $lesson = $event->lesson;
+        $user = $event->user;
+        $no_of_watched_lessons = $user->watched()->get()->count();
+        $achievements = Achievement::where('type', 'lesson')->get();
 
-        foreach($achievement_breakpoints as $achievement_breakpoint){
-            if($no_of_watched_lessons == $achievement_breakpoint){
-                if($achievement_breakpoint == 1){
-                    $achievement['name'] = 'First Lesson Watched';
-                }else{
-                    $achievement['name'] = $achievement_breakpoint . ' Lessons Watched';
-                }
-                $achievement['type'] = 'lesson';
-                $user()->achievements()->create($achievement);
-                AchievementUnlocked::dispatch($achievement['name'], $user);
-                break;
+        //set user's current achievement
+        $current_achievement = $user->achievements()->where('type', 'lesson')->get()->last();
+
+        //if current there is no achievement
+        if(!$current_achievement){
+            $current_index = 0;
+        }else{
+            $current_index = array_search($current_achievement, array_values($achievements));
+        }   
+
+        //if achievement is not on the highest level
+        if($current_index != count($achievements)){
+            $next_achievement = $achievements[$current_index++];
+            $next_breakpoint = $next_achievement['breakpoint'];
+
+            //if next achievement is reached
+            if($no_of_watched_lessons == $next_breakpoint){
+                $user->achievements()->attach($next_achievement->id);
+                AchievementUnlocked::dispatch($next_achievement['name'], $user);
             }
         }
     }

@@ -15,7 +15,7 @@ class Achievement extends Model
      * @var array
      */
     protected $fillable = [
-        'user_id', 'name'
+        'name', 'type', 'breakpoint'
     ];
     
     /**

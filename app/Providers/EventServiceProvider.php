@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Events\LessonWatched;
 use App\Events\CommentWritten;
+use App\Listeners\CheckForCommentAchievement;
+use App\Listeners\CheckForLessonAchievement;
+use App\Listeners\CheckForBadge;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
@@ -25,7 +28,7 @@ class EventServiceProvider extends ServiceProvider
             CheckForBadge::class
         ],
         BadgeUnlocked::class => [
-            CheckForBadge::class
+            
         ],
     ];
 

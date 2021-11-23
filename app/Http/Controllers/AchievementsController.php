@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Achievement;
+use App\Models\Badge;
 use Illuminate\Http\Request;
 
 class AchievementsController extends Controller
@@ -19,88 +21,99 @@ class AchievementsController extends Controller
     }
 
     public function getUnlockedAchievements($user){
-        return $user->achievements()->name;
+        $no_of_lessons_watched = $user->watched()->count();
+        $no_of_comments = $user->comments()->count();
+
+        $lesson_achievements = Achievement::where('type', 'lesson')->get();
+        $comment_achievements = Achievement::where('type', 'comment')->get();
+
+        $achievement_names = [];
+
+        foreach($lesson_achievements as $lesson_achievement){
+            if($no_of_lessons_watched >= $lesson_achievement->breakpoint){
+                array_push($achievement_names, $lesson_achievement->name);
+            }
+        }
+
+        foreach($comment_achievements as $comment_achievement){
+            if($no_of_comments >= $comment_achievement->breakpoint){
+                array_push($achievement_names, $comment_achievement->name);
+            }
+        }
+
+        return $achievement_names;
     }
 
     public function getNextAvailableAchievements($user){
-        $lesson_breakpoints = [1, 5, 10, 25, 50];
-        $comment_breakpoints = [1, 3, 5, 10, 20];
-        $no_of_lesson_achievements = $user->achievements()->where('type', 'lesson')->count();
-        $no_of_comment_achievements = $user->achievements()->where('type', 'comment')->count();
+        $no_of_lessons_watched = $user->watched()->count();
+        $no_of_comments = $user->comments()->count();
+        $lesson_achievements = Achievement::where('type', 'lesson')->get();
+        $comment_achievements = Achievement::where('type', 'comment')->get();
 
-        if($no_of_lesson_achievements == 0){
-            $next_lesson_achievement = 'First Lesson Watched';
-        }else{
-            $next_lesson_achievement = $lesson_breakpoints[$no_of_lesson_achievements + 1] . ' Lessons Watched';
+        foreach($lesson_achievements as $lesson_achievement){
+            if($no_of_lessons_watched < $lesson_achievement->breakpoint){
+                $next_lesson_achievement = $lesson_achievement->name;
+                break;
+            }
+            $next_lesson_achievement = null;
         }
-        
-        if($no_of_comment_achievements == 0){
-            $next_comment_achievement = 'First Comment Written';
-        }else{
-            $next_comment_achievement = $comment_breakpoints[$no_of_comment_achievements + 1] . ' Comments Written';
+
+        foreach($comment_achievements as $comment_achievement){
+            if($no_of_comments >= $comment_achievement->breakpoint){
+                $next_comment_achievement = $comment_achievement->name;
+                break;
+            }
+            $next_comment_achievement = null;
         }
 
         return [$next_lesson_achievement, $next_comment_achievement];
     }
 
     public function currentBadge($user){
-        return $user->badges()->latest()->first()->name;
+        $no_of_badges = $user->badges()->count();
+        $no_of_achievements = $user->achievements()->count();
+        $badges = Badge::all();
+        $badge_names = [];
+
+        foreach($badges as $badge){
+            if($no_of_achievements >= $badge->breakpoint){
+                array_push($badge_names, $badge->name);
+            }
+        }
+        
+        $current_badge_name = $badge_names[count($badge_names) - 1];
+
+        return $current_badge_name;
     }
 
     public function nextBadge($user){
         $no_of_badges = $user->badges()->count();
-        $badges = [
-            [
-                'name' => 'Beginner',
-                'breakpoint' => 0
-            ],
-            [
-                'name' => 'Intermediate',
-                'breakpoint' => 4
-            ],
-            [
-                'name' => 'Advanced',
-                'breakpoint' => 8
-            ],
-            [
-                'name' => 'Master',
-                'breakpoint' => 10
-            ],
-        ]; //breakpoints for badges
+        $no_of_achievements = $user->achievements()->count();
+        $badges = Badge::all();
+        $badge_names = [];
 
-        if($no_of_badges == 0){
-            $next_badge = 'Beginner';
-        }else{
-            $next_badge = $badges[$no_of_badges + 1]['name'];
+        foreach($badges as $badge){
+            if($no_of_achievements >= $badge->breakpoint){
+                array_push($badge_names, $badge->name);
+            }
         }
+        $next_badge = $badges[count($badge_names) + 1];
+        $next_badge_name = $next_badge->name;
 
-        return $next_badge;
+        return $next_badge_name;
     }
 
     public function remainingForNextBadge($user){
         $no_of_badges = $user->badges()->count();
         $no_of_achievements = $user->achievements()->count();
-        $badges = [
-            [
-                'name' => 'Beginner',
-                'breakpoint' => 0
-            ],
-            [
-                'name' => 'Intermediate',
-                'breakpoint' => 4
-            ],
-            [
-                'name' => 'Advanced',
-                'breakpoint' => 8
-            ],
-            [
-                'name' => 'Master',
-                'breakpoint' => 10
-            ],
-        ]; //breakpoints for badges
+        $badges = Badge::all();
 
-        $next_badge_breakpoint = $badges[$no_of_badges + 1]['breakpoint'];
-        $remaining = $next_badge_breakpoint - $no_of_achievements;
+        if($no_of_badges == count($badges)){
+            $remaining = 0;
+        }else{
+            $next_badge_breakpoint = $badges[$no_of_badges + 1]['breakpoint'];
+            $remaining = $next_badge_breakpoint - $no_of_achievements;
+        }
 
         return $remaining;
     }

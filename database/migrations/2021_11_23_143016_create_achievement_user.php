@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddTypeToAchievements extends Migration
+class CreateAchievementUser extends Migration
 {
     /**
      * Run the migrations.
@@ -13,8 +13,11 @@ class AddTypeToAchievements extends Migration
      */
     public function up()
     {
-        Schema::table('achievements', function (Blueprint $table) {
-            $table->enum('type', ['lesson', 'comment']);
+        Schema::create('achievement_user', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained();
+            $table->foreignId('achievement_id')->constrained();
+            $table->timestamps();
         });
     }
 
@@ -25,8 +28,6 @@ class AddTypeToAchievements extends Migration
      */
     public function down()
     {
-        Schema::table('achievements', function (Blueprint $table) {
-            //
-        });
+        Schema::dropIfExists('achievement_user');
     }
 }

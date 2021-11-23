@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Models\Achievement;
 use App\Events\CommentWritten;
 use App\Events\AchievementUnlocked;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,20 +29,23 @@ class CheckForCommentAchievement
     public function handle(CommentWritten $event)
     {
         $comment = $event->comment;
-        $no_of_comments = $comment->user()->comments()->count();
-        $achievement_breakpoints = [1, 3, 5, 10, 20]; //breakpoints for comments
+        $user = $comment->user;
+        $no_of_comments = $user->comments()->count();
+        $achievements = Achievement::where('type', 'comment')->get();
 
-        foreach($achievement_breakpoints as $achievement_breakpoint){
-            if($no_of_comments == $achievement_breakpoint){
-                if($achievement_breakpoint == 1){
-                    $achievement['name'] = 'First Comment Written';
-                }else{
-                    $achievement['name'] = $achievement_breakpoint . ' Comments Written';
-                }
-                $achievement['type'] = 'comment';
-                $comment->user()->achievements()->create($achievement);
-                AchievementUnlocked::dispatch($achievement['name'], $comment->user);
-                break;
+        $current_achievement = $user->achievements()->where('type', 'comment')->get()->last();
+        if(!$current_achievement){
+            $current_index = 0;
+        }else{
+            $current_index = array_search($current_achievement, array_values($achievements));
+        }   
+
+        if($current_index != count($achievements)){
+            $next_achievement = $achievements[$current_index++];
+            $next_breakpoint = $next_achievement['breakpoint'];
+            if($no_of_comments == $next_breakpoint){
+                $user->achievements()->attach($next_achievement->id);
+                AchievementUnlocked::dispatch($achievement['name'], $user);
             }
         }
     }

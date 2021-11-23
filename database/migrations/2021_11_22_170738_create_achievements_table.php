@@ -15,8 +15,9 @@ class CreateAchievementsTable extends Migration
     {
         Schema::create('achievements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained();
             $table->string('name');
+            $table->integer('breakpoint');
+            $table->enum('type', ['lesson', 'comment']);
             $table->timestamps();
         });
     }
