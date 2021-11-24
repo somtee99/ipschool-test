@@ -34,9 +34,11 @@ class ExampleTest extends TestCase
 
     public function dispatchLessonOnWatchEvent(int $no_of_lessons_watched, bool $watched = true)
     {
+        //create lessons from factory
         $lessons = Lesson::factory()->count($no_of_lessons_watched)->create();
         $lesson = $lessons->last();
 
+        //attach lessons to a user
         $user = User::factory()
                     ->count(1)
                     ->hasAttached($lessons, ['watched' => $watched])
@@ -46,6 +48,7 @@ class ExampleTest extends TestCase
             LessonWatched::class
         ]);
 
+        //run lesson watched event
         event(new LessonWatched($lesson, $user));
 
         Event::assertDispatched(LessonWatched::class);
@@ -58,7 +61,9 @@ class ExampleTest extends TestCase
 
     public function dispatchCommentWrittenEvent(int $no_of_comments_written)
     {
+        //create user from factory
         $user = User::factory()->create();
+        //create lessons from factory for user
         $comments = Comment::factory()->count($no_of_comments_written)
             ->for($user)->create();
 
@@ -68,6 +73,7 @@ class ExampleTest extends TestCase
             CommentWritten::class
         ]);
 
+        //run comment written event
         event(new CommentWritten($comment, $user));
 
         Event::assertDispatched(CommentWritten::class);
@@ -80,8 +86,10 @@ class ExampleTest extends TestCase
 
     public function dispatchAchievementUnlockedEvent(int $no_of_achievements)
     {
+        //set achievements
         $achievements = Achievement::where('id', '<=', $no_of_achievements)->get();
 
+        //attach achievements to a user from factory
         $user = User::factory()
             ->count($no_of_achievements)
             ->hasAttached($achievements)
@@ -95,6 +103,7 @@ class ExampleTest extends TestCase
 
         event(new AchievementUnlocked($achievement->name, $user));
 
+        //run achievement unlocked event
         Event::assertDispatched(AchievementUnlocked::class);
 
         return [
@@ -105,39 +114,48 @@ class ExampleTest extends TestCase
 
     public function test_lesson_achievement_unlocked()
     {
-        $no_of_lessons_watched = 5;
+        //set testing variables
+        $no_of_lessons_watched = 8;
         $expected_data = [
             'unlocked_achievements' => ['First Lesson Watched', '5 Lessons Watched'],
             'next_available_achievements' => ['10 Lessons Watched']
         ];
 
+        //dispatch lesson on watch event
         $event = $this->dispatchLessonOnWatchEvent($no_of_lessons_watched, true);
 
+        //send request
         $response = $this->get("/users/{$event['user']['id']}/achievements");
 
+        //assert expected data from response
         $response->assertStatus(200)->assertJson($expected_data);
     }
 
 
     public function test_comment_achievement_unlocked()
     {
+        //set testing variables
         $no_of_comments_written = 20;
         $expected_data = [
             'unlocked_achievements' => ['First Comment Written', '3 Comments Written',
             '5 Comments Written', '10 Comments Written', '20 Comments Written'],
-            'next_available_achievements' => []
+            'next_available_achievements' => ['First Lesson Watched']
         ];
 
+        //dispatch comment written event
         $event = $this->dispatchCommentWrittenEvent($no_of_comments_written);
 
+        //send http request
         $response = $this->get("/users/{$event['user']['id']}/achievements");
 
+        //assert expected data from response
         $response->assertStatus(200)->assertJson($expected_data);
     }
 
 
     public function test_badge_unlocked()
     {
+        //set testing variables
         $no_of_achievements = 10;
         $expected_data = [
             'current_badge' => 'Master',
@@ -145,10 +163,13 @@ class ExampleTest extends TestCase
             'remaining_to_unlock_next_badge' => 0
         ];
 
+        //dispatch achievement unlocked event
         $event = $this->dispatchAchievementUnlockedEvent($no_of_achievements);
 
+        //send http request
         $response = $this->get("/users/{$event['user']['id']}/achievements");
 
+        //assert expected data from response
         $response->assertStatus(200)->assertJson($expected_data);
     }
 

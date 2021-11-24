@@ -14,6 +14,7 @@ class BadgeSeeder extends Seeder
      */
     public function run()
     {
+        //set badge names and breakpoints
         $badges = [
             [
                 'name' => 'Beginner',
@@ -34,6 +35,7 @@ class BadgeSeeder extends Seeder
         ]; 
 
         foreach($badges as $badge){
+            //create badge
             Badge::create($badge);
         }
     }
