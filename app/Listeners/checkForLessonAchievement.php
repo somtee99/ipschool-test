@@ -37,7 +37,7 @@ class CheckForLessonAchievement
         //set user's current achievement
         $current_achievement = $user->achievements()->where('type', 'lesson')->get()->last();
 
-        //if current there is no achievement
+        //if current there is no current achievement
         if(!$current_achievement){
             $current_index = 0;
         }else{

@@ -2,6 +2,8 @@
 
 namespace App\Listeners;
 
+use App\Models\User;
+use App\Models\Badge;
 use App\Events\AchievementUnlocked;
 use App\Events\BadgeUnlocked;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,34 +30,30 @@ class CheckForBadge
     public function handle(AchievementUnlocked $event)
     {
         $user = $event->user;
-        $no_of_achievements = $user()->achievements()->count();
-        $badges = [
-            [
-                'name' => 'Beginner',
-                'breakpoint' => 0
-            ],
-            [
-                'name' => 'Intermediate',
-                'breakpoint' => 4
-            ],
-            [
-                'name' => 'Advanced',
-                'breakpoint' => 8
-            ],
-            [
-                'name' => 'Master',
-                'breakpoint' => 10
-            ],
-        ]; //breakpoints for badges
+        $no_of_achievements = $user->achievements()->count();
+        $badges = Badge::all();
 
-        foreach($badges as $badge){
-            if($no_of_achievements == $badge['breakpoint']){
-                $data['name'] = $badge['name'];
-                $user()->badges()->create($data);
-                
+        //set user's current badge
+        $current_badge = $user->badges()->get()->last();
+
+        //if current there is no current badge
+        if(!$current_badge){
+            $current_index = 0;
+        }else{
+            $current_index = array_search($current_badge, array_values($badges));
+        }   
+
+        //if badge is not on the highest level
+        if($current_index != count($badges)){
+            $next_badge = $badges[$current_index++];
+            $next_breakpoint = $next_badge['breakpoint'];
+
+            //if next badge is reached
+            if($no_of_achievements == $next_breakpoint){
+                User::find($user->id)->badges()->attach($next_badge->id);
                 BadgeUnlocked::dispatch($badge['name'], $user);
-                break;
             }
         }
+
     }
 }

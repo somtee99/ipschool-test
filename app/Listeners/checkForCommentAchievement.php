@@ -33,16 +33,22 @@ class CheckForCommentAchievement
         $no_of_comments = $user->comments()->count();
         $achievements = Achievement::where('type', 'comment')->get();
 
+        //set user's current achievement
         $current_achievement = $user->achievements()->where('type', 'comment')->get()->last();
+
+        //if current there is no current achievement
         if(!$current_achievement){
             $current_index = 0;
         }else{
             $current_index = array_search($current_achievement, array_values($achievements));
         }   
 
+        //if achievement is not on the highest level
         if($current_index != count($achievements)){
             $next_achievement = $achievements[$current_index++];
             $next_breakpoint = $next_achievement['breakpoint'];
+
+            //if next achievement is reached
             if($no_of_comments == $next_breakpoint){
                 $user->achievements()->attach($next_achievement->id);
                 AchievementUnlocked::dispatch($achievement['name'], $user);

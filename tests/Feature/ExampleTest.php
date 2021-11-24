@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use Event;
 use App\Models\User;
 use App\Models\Lesson;
 use App\Models\Comment;
 use App\Models\Achievement;
+use App\Models\Badge;
 use App\Events\LessonWatched;
 use App\Events\CommentWritten;
+use App\Events\AchievementUnlocked;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class ExampleTest extends TestCase
@@ -29,7 +32,8 @@ class ExampleTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function dispatchLessonOnWatchEvent(int $no_of_lessons_watched, bool $watched = true){
+    public function dispatchLessonOnWatchEvent(int $no_of_lessons_watched, bool $watched = true)
+    {
         $lessons = Lesson::factory()->count($no_of_lessons_watched)->create();
         $lesson = $lessons->last();
 
@@ -38,7 +42,13 @@ class ExampleTest extends TestCase
                     ->hasAttached($lessons, ['watched' => $watched])
                     ->create()->first();
 
-        LessonWatched::dispatch($lesson, $user);
+        Event::fake([
+            LessonWatched::class
+        ]);
+
+        event(new LessonWatched($lesson, $user));
+
+        Event::assertDispatched(LessonWatched::class);
 
         return [
             'lesson' => $lesson, 
@@ -46,14 +56,21 @@ class ExampleTest extends TestCase
         ];
     }
 
-    public function dispatchCommentWrittenEvent(int $no_of_comments_written){
+    public function dispatchCommentWrittenEvent(int $no_of_comments_written)
+    {
         $user = User::factory()->create();
         $comments = Comment::factory()->count($no_of_comments_written)
             ->for($user)->create();
 
         $comment = $comments->last();
 
-        CommentWritten::dispatch($comment, $user);
+        Event::fake([
+            CommentWritten::class
+        ]);
+
+        event(new CommentWritten($comment, $user));
+
+        Event::assertDispatched(CommentWritten::class);
 
         return [
             'comment' => $comment, 
@@ -61,11 +78,37 @@ class ExampleTest extends TestCase
         ];
     }
 
+    public function dispatchAchievementUnlockedEvent(int $no_of_achievements)
+    {
+        $achievements = Achievement::where('id', '<=', $no_of_achievements)->get();
+
+        $user = User::factory()
+            ->count($no_of_achievements)
+            ->hasAttached($achievements)
+            ->create()->first();
+
+        $achievement = $achievements->last();
+
+        Event::fake([
+            AchievementUnlocked::class
+        ]);
+
+        event(new AchievementUnlocked($achievement->name, $user));
+
+        Event::assertDispatched(AchievementUnlocked::class);
+
+        return [
+            'achievement' => $achievement, 
+            'user' => $user
+        ];
+    }
+
     public function test_lesson_achievement_unlocked()
     {
-        $no_of_lessons_watched = 4;
+        $no_of_lessons_watched = 5;
         $expected_data = [
-            'unlocked_achievements' => ['First Lesson Watched']
+            'unlocked_achievements' => ['First Lesson Watched', '5 Lessons Watched'],
+            'next_available_achievements' => ['10 Lessons Watched']
         ];
 
         $event = $this->dispatchLessonOnWatchEvent($no_of_lessons_watched, true);
@@ -75,39 +118,14 @@ class ExampleTest extends TestCase
         $response->assertStatus(200)->assertJson($expected_data);
     }
 
-    public function test_if_lesson_achievement_is_stored()
-    {
-        $no_of_lessons_watched = 4;
-        $achievement = null;
-
-        //get possible achievement
-        $achievements = Achievement::where('type', 'lesson')->get();
-        foreach($achievements as $possible_achievement){
-            //if achievement requirements is met
-            if($no_of_lessons_watched == $possible_achievement->breakpoint){
-                $achievement = $possible_achievement;
-            }
-        }
-
-        //dispatch lesson on watch event
-        $event = $this->dispatchLessonOnWatchEvent($no_of_lessons_watched, true);
-
-        if($achievement){
-            $this->assertDatabaseHas('achievement_user', [
-                'user_id' => $event['user']['id'],
-                'achievement_id' => $achievement->id
-            ]);
-        }else{
-            $this->expectNotToPerformAssertions();
-        }
-        
-    }
 
     public function test_comment_achievement_unlocked()
     {
-        $no_of_comments_written = 4;
+        $no_of_comments_written = 20;
         $expected_data = [
-            'unlocked_achievements' => ['First Comment Written']
+            'unlocked_achievements' => ['First Comment Written', '3 Comments Written',
+            '5 Comments Written', '10 Comments Written', '20 Comments Written'],
+            'next_available_achievements' => []
         ];
 
         $event = $this->dispatchCommentWrittenEvent($no_of_comments_written);
@@ -117,31 +135,22 @@ class ExampleTest extends TestCase
         $response->assertStatus(200)->assertJson($expected_data);
     }
 
-    public function test_if_comment_achievement_is_stored()
+
+    public function test_badge_unlocked()
     {
-        $no_of_comments_written = 4;
-        $achievement = null;
+        $no_of_achievements = 10;
+        $expected_data = [
+            'current_badge' => 'Master',
+            'next_badge' => null,
+            'remaining_to_unlock_next_badge' => 0
+        ];
 
-        //get possible achievement
-        $achievements = Achievement::where('type', 'comment')->get();
-        foreach($achievements as $possible_achievement){
-            //if achievement requirements is met
-            if($no_of_comments_written == $possible_achievement->breakpoint){
-                $achievement = $possible_achievement;
-            }
-        }
+        $event = $this->dispatchAchievementUnlockedEvent($no_of_achievements);
 
-        //dispatch lesson on watch event
-        $event = $this->dispatchCommentWrittenEvent($no_of_comments_written);
+        $response = $this->get("/users/{$event['user']['id']}/achievements");
 
-        if($achievement){
-            $this->assertDatabaseHas('achievement_user', [
-                'user_id' => $event['user']['id'],
-                'achievement_id' => $achievement->id
-            ]);
-        }else{
-            $this->expectNotToPerformAssertions();
-        }
-        
+        $response->assertStatus(200)->assertJson($expected_data);
     }
+
+    
 }
