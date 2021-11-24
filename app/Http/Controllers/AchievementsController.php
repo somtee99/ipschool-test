@@ -108,6 +108,8 @@ class AchievementsController extends Controller
     public function remainingForNextBadge($user){
         //get all badges
         $badges = Badge::all();
+        //get no of user achievements
+        $no_of_achievements = $user->achievements()->count();
 
         //get user's badges
         $user_badges = $this->getUserBadges($user);
@@ -126,8 +128,8 @@ class AchievementsController extends Controller
     }
 
     public function getUserBadges($user){
-        //get number of user's achievements 
         $no_of_achievements = $user->achievements()->count();
+
         //get all badges 
         $badges = Badge::all();
         $user_badges = [];
@@ -136,11 +138,11 @@ class AchievementsController extends Controller
         foreach($badges as $badge){
             //if user has unlocked badge
             if($no_of_achievements >= $badge->breakpoint){
-                array_push($user_badges, $badges);
+                array_push($user_badges, $badge);
             }
         }
 
-        return $badges;   
+        return $user_badges;   
     }
 
     public function getUserCommentAchievements($user){
