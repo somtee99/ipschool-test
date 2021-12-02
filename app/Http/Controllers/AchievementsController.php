@@ -20,11 +20,27 @@ class AchievementsController extends Controller
         ]);
     }
 
+    /**
+     * gets the name of the achievements a user has unlocked
+     * 
+     * @param User $user
+     * 
+     * @return string[]
+     */
     public function getUnlockedAchievements($user){
+        /**
+         * holds user's comment achievements
+         *  @var string[] */
         $achievement_names = [];
 
         //get user's achievements
+        /**
+         * holds user's comment achievements
+         *  @var Achievement[] */
         $user_lesson_achievements = $this->getUserLessonAchievements($user);
+        /**
+         * holds user's lesson achievements
+         *  @var Achievement[] */
         $user_comment_achievements = $this->getUserCommentAchievements($user);
 
         //get names of lesson achievements
@@ -39,13 +55,32 @@ class AchievementsController extends Controller
         return $achievement_names;
     }
 
+    /**
+     * returns the next achievements a user can get
+     * 
+     * @param User $user
+     * 
+     * @return String[]
+     */
     public function getNextAvailableAchievements($user){
         //get all achievements
+        /**
+         * holds all achieveable lesson achievements
+         *  @var Achievement[] */
         $lesson_achievements = Achievement::where('type', 'lesson')->get();
+        /**
+         * holds all achieveable comment achievements
+         *  @var Achievement[] */
         $comment_achievements = Achievement::where('type', 'comment')->get();
 
         //get user's achievements
+        /**
+         * holds user's comment achievements
+         *  @var Achievement[] */
         $user_lesson_achievements = $this->getUserLessonAchievements($user);
+        /**
+         * holds user's lesson achievements
+         *  @var Achievement[] */
         $user_comment_achievements = $this->getUserCommentAchievements($user);
 
         $no_of_lesson_achievements = count($user_lesson_achievements);
@@ -71,6 +106,13 @@ class AchievementsController extends Controller
         return [$next_lesson_achievement_name, $next_comment_achievement_name];
     }
 
+    /**
+     * get the user's currents badges
+     * 
+     * @param User $user
+     * 
+     * @return Badge
+     */
     public function currentBadge($user){
         //get all badges
         $badges = Badge::all();
@@ -85,6 +127,14 @@ class AchievementsController extends Controller
         return $current_badge_name;
     }
 
+    /**
+     * gets the user's next badge to get, returns null if there is
+     * no next badge
+     * 
+     * @param User $user
+     * 
+     * @return String
+     */
     public function nextBadge($user){
         //get all badges
         $badges = Badge::all();
@@ -105,6 +155,14 @@ class AchievementsController extends Controller
         return $next_badge_name;
     }
 
+    /**
+     * gets the number of remaining achievements for a user
+     * to get the next badge
+     * 
+     * @param User $user
+     * 
+     * @return int
+     */
     public function remainingForNextBadge($user){
         //get all badges
         $badges = Badge::all();
@@ -127,6 +185,13 @@ class AchievementsController extends Controller
         return $remaining;
     }
 
+    /**
+     * get a user's badges
+     * 
+     * @param User $user
+     * 
+     * @return Badge[]
+     */
     public function getUserBadges($user){
         $no_of_achievements = $user->achievements()->count();
 
@@ -145,6 +210,13 @@ class AchievementsController extends Controller
         return $user_badges;   
     }
 
+    /**
+     * get a user's comment acheivements
+     *
+     * @param User $user
+     * 
+     * @return Achievement[]
+     */
     public function getUserCommentAchievements($user){
         //get number of user's comments
         $no_of_comments = $user->comments()->count();
@@ -164,6 +236,13 @@ class AchievementsController extends Controller
         return $user_comment_achievements;
     }
 
+    /**
+     * gets a user's lesson achivements
+     *
+     * @param User $user
+     * 
+     * @return Achievement[]
+     */
     public function getUserLessonAchievements($user){
         //get number of user's watched lessons
         $no_of_watched_lessons = $user->watched()->count();

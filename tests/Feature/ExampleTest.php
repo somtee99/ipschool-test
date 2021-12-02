@@ -32,6 +32,13 @@ class ExampleTest extends TestCase
         $response->assertStatus(200);
     }
 
+    /**
+     * Creates a particular number of lessons and dispatches the last lesson. Returns the user 
+     * and the dispatched lesson
+     *
+     * @param int $no_of_lessons_watched bool $watched
+     * @return void
+     */
     public function dispatchLessonOnWatchEvent(int $no_of_lessons_watched, bool $watched = true)
     {
         //create lessons from factory
@@ -125,8 +132,9 @@ class ExampleTest extends TestCase
 
         //if user has an achievement
         if($achievement){
-            event(new AchievementUnlocked($achievement->name, $user));
             //run achievement unlocked event
+            event(new AchievementUnlocked($achievement->name, $user));
+            
             Event::assertDispatched(AchievementUnlocked::class);
         }
 
@@ -139,10 +147,10 @@ class ExampleTest extends TestCase
     public function test_lesson_achievement_unlocked()
     {
         //set testing variables
-        $no_of_lessons_watched = 8;
+        $no_of_lessons_watched = 9;
         $expected_data = [
-            'unlocked_achievements' => ['First Lesson Watched', '5 Lessons Watched'],
-            'next_available_achievements' => ['10 Lessons Watched']
+            'unlocked_achievements' => [],
+            'next_available_achievements' => ['First Lesson Watched']
         ];
 
         //dispatch lesson on watch event
@@ -159,11 +167,11 @@ class ExampleTest extends TestCase
     public function test_comment_achievement_unlocked()
     {
         //set testing variables
-        $no_of_comments_written = 100;
+        $no_of_comments_written = 4;
         $expected_data = [
             'unlocked_achievements' => ['First Comment Written', '3 Comments Written',
-            '5 Comments Written', '10 Comments Written', '20 Comments Written'],
-            'next_available_achievements' => ['First Lesson Watched']
+            ],
+            'next_available_achievements' => ['First Lesson Watched', '5 Comments Written']
         ];
 
         //dispatch comment written event
